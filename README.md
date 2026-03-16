@@ -2,7 +2,7 @@
 
 A ready-to-use template for building NewGuildPlus apps. Demonstrates all integration points: Hub pages, API routes, bot hooks, config fields, and i18n.
 
-This template implements a **Community Points** system — members earn points for voice activity, moderators can award bonus points, and a leaderboard tracks the top contributors.
+This template demonstrates all integration points with a working example: Hub pages, API routes, bot hooks, config fields, and i18n. Replace the example logic with your own implementation.
 
 ## Quick Start
 

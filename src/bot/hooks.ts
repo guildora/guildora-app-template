@@ -1,8 +1,14 @@
-// Bot hook handlers for Community Points.
+// Bot hook handlers for My App.
 // All hooks declared in manifest.botHooks must be exported here.
 // The NewGuildPlus host calls these functions when the corresponding events fire.
 
-import type { BotContext, VoiceActivityPayload, RoleChangePayload } from '@newguildplus/app-sdk'
+import type {
+  BotContext,
+  VoiceActivityPayload,
+  RoleChangePayload,
+  MemberJoinPayload,
+  InteractionPayload
+} from '@newguildplus/app-sdk'
 
 /**
  * onVoiceActivity — fires when a member joins, leaves, or moves in voice.
@@ -27,25 +33,63 @@ export async function onVoiceActivity(payload: VoiceActivityPayload, ctx: BotCon
 /**
  * onRoleChange — fires when a member's roles are updated.
  *
- * We use this to automatically assign the top-tier role to the leaderboard
- * top 3 members. In practice you would do this via a scheduled task, but
- * a role change event is a good moment to re-evaluate rankings.
+ * We use this to log tier role gains or removals.
  */
 export async function onRoleChange(payload: RoleChangePayload, ctx: BotContext) {
-  // Example: remove old tier roles from the member if they were just demoted
   const tierRoles = ['bronze', 'silver', 'gold']
   const topTier = (ctx.config.topTier as string) ?? 'gold'
 
-  // If a tier role was removed and they no longer have points, clean up
-  const hadTierRole = payload.removedRoles.some((r) => tierRoles.includes(r))
-  if (hadTierRole) {
-    // Nothing to do in this example — role removal is handled externally
-  }
-
-  // If they just received a tier role, log it (or send a congrats message)
   const gainedTopTier = payload.addedRoles.includes(topTier)
   if (gainedTopTier) {
-    // In a real app you might send a congratulations message here
-    // await ctx.bot.sendMessage(announcementChannelId, `Congrats ${memberId}!`)
+    // Log the tier achievement to the KV store
+    await ctx.db.set(`tier:${payload.memberId}`, {
+      tier: topTier,
+      achievedAt: new Date().toISOString()
+    })
   }
+
+  // If a tier role was removed, clear the tier record
+  const lostTierRole = payload.removedRoles.some((r) => tierRoles.includes(r))
+  if (lostTierRole) {
+    await ctx.db.delete(`tier:${payload.memberId}`)
+  }
+}
+
+/**
+ * onMemberJoin — fires when a new member joins the Discord server.
+ *
+ * We send a welcome message and set starting points.
+ */
+export async function onMemberJoin(payload: MemberJoinPayload, ctx: BotContext) {
+  const welcomeChannelId = ctx.config.welcomeChannelId as string | undefined
+  if (welcomeChannelId) {
+    await ctx.bot.sendMessage(
+      welcomeChannelId,
+      `Welcome to the server, <@${payload.memberId}>!`
+    )
+  }
+
+  // Initialize their points entry so they appear in the leaderboard
+  const existing = await ctx.db.get(`points:${payload.memberId}`)
+  if (existing === null) {
+    await ctx.db.set(`points:${payload.memberId}`, 0)
+  }
+}
+
+/**
+ * onInteraction — fires when a slash command is used.
+ *
+ * We handle the /points command to show a member's current balance.
+ */
+export async function onInteraction(payload: InteractionPayload, ctx: BotContext) {
+  if (payload.commandName !== 'points') return
+
+  const points = ((await ctx.db.get(`points:${payload.memberId}`)) as number) ?? 0
+
+  // Write an audit log entry
+  await ctx.db.set(`audit:${payload.memberId}:${Date.now()}`, {
+    command: 'points',
+    result: points,
+    at: payload.occurredAt
+  })
 }

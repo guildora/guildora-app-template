@@ -1,140 +1,83 @@
 <template>
-  <div class="p-6 font-nunito">
+  <div class="p-6 font-sans">
     <!-- Page header -->
     <div class="mb-6">
-      <h1 class="text-3xl font-bold text-[var(--color-text)]">
-        {{ t('title') }}
+      <h1 class="text-3xl font-bold" style="color: var(--color-text, #111)">
+        My App
       </h1>
-      <p class="mt-1 text-sm text-[var(--color-text-muted)]">
-        {{ t('subtitle') }}
+      <p class="mt-1 text-sm" style="color: var(--color-text-muted, #666)">
+        A short description of what your app does.
       </p>
     </div>
 
     <!-- Loading state -->
-    <div v-if="pending" class="text-[var(--color-text-muted)]">
-      {{ t('loading') }}
-    </div>
+    <div v-if="pending" style="color: var(--color-text-muted, #666)">Loading…</div>
 
     <!-- Error state -->
     <div
       v-else-if="error"
-      class="rounded-lg border border-red-400 bg-red-50 p-4 text-red-700"
+      style="border: 1px solid #f87171; background: #fef2f2; padding: 1rem; border-radius: 0.5rem; color: #b91c1c;"
     >
-      {{ t('error.load') }}
+      Failed to load stats. Please refresh the page.
     </div>
 
     <!-- Content -->
     <div v-else class="space-y-4">
       <!-- Your points card -->
       <div
-        class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-md"
+        style="border: 1px solid var(--color-border, #e5e7eb); background: var(--color-surface, #fff); padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"
       >
-        <p class="text-sm font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-          {{ t('yourPoints') }}
+        <p class="text-sm font-semibold" style="color: var(--color-text-muted, #666); text-transform: uppercase; letter-spacing: 0.05em;">
+          Your Points
         </p>
-        <p class="mt-1 text-4xl font-bold text-[var(--color-accent)]">
-          {{ data?.myPoints ?? 0 }}
+        <p class="mt-1 text-4xl font-bold" style="color: var(--color-accent, #ff206e)">
+          {{ stats?.myPoints ?? 0 }}
         </p>
-        <p class="mt-1 text-xs text-[var(--color-text-muted)]">
-          {{ t('rank') }}: #{{ data?.myRank ?? '—' }}
+        <p class="mt-1 text-xs" style="color: var(--color-text-muted, #666)">
+          Rank: #{{ stats?.myRank ?? '—' }}
         </p>
       </div>
 
-      <!-- Leaderboard preview (if public) -->
+      <!-- Leaderboard preview -->
       <div
-        v-if="config.leaderboardVisible"
-        class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-md"
+        v-if="stats?.topMembers?.length"
+        style="border: 1px solid var(--color-border, #e5e7eb); background: var(--color-surface, #fff); padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"
       >
-        <div class="mb-3 flex items-center justify-between">
-          <h2 class="font-bold text-[var(--color-text)]">{{ t('leaderboard') }}</h2>
-          <NuxtLink
-            to="/apps/community-points/leaderboard"
-            class="text-xs text-[var(--color-accent)] hover:underline"
-          >
-            {{ t('viewAll') }}
-          </NuxtLink>
-        </div>
-
-        <ol class="space-y-2">
+        <h2 class="mb-3 font-bold" style="color: var(--color-text, #111)">Top Members</h2>
+        <ol>
           <li
-            v-for="(entry, index) in data?.topMembers"
+            v-for="(entry, index) in stats.topMembers"
             :key="entry.memberId"
-            class="flex items-center gap-3 text-sm"
+            style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; padding: 0.25rem 0;"
           >
-            <span class="w-5 text-right font-bold text-[var(--color-text-muted)]">
+            <span style="width: 1.25rem; text-align: right; font-weight: bold; color: var(--color-text-muted, #666)">
               {{ index + 1 }}.
             </span>
-            <span class="flex-1 text-[var(--color-text)]">{{ entry.displayName }}</span>
-            <span class="font-semibold text-[var(--color-accent)]">{{ entry.points }}</span>
+            <span style="flex: 1; color: var(--color-text, #111)">{{ entry.displayName }}</span>
+            <span style="font-weight: 600; color: var(--color-accent, #ff206e)">{{ entry.points }}</span>
           </li>
         </ol>
-      </div>
-
-      <!-- Moderator: Award points panel -->
-      <div
-        v-if="hasRole('moderator')"
-        class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-4 shadow-md"
-      >
-        <h2 class="mb-3 font-bold text-[var(--color-text)]">{{ t('awardPoints') }}</h2>
-        <form class="flex gap-2" @submit.prevent="awardPoints">
-          <input
-            v-model="awardTarget"
-            type="text"
-            :placeholder="t('memberIdPlaceholder')"
-            class="flex-1 rounded border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-accent)]"
-          />
-          <input
-            v-model.number="awardAmount"
-            type="number"
-            min="1"
-            :placeholder="t('amountPlaceholder')"
-            class="w-20 rounded border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-accent)]"
-          />
-          <button
-            type="submit"
-            :disabled="awarding"
-            class="rounded bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-accent-hover)] disabled:opacity-50"
-          >
-            {{ awarding ? t('awarding') : t('award') }}
-          </button>
-        </form>
-        <p v-if="awardMessage" class="mt-2 text-sm text-green-600">{{ awardMessage }}</p>
       </div>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-// Composables are globally injected by the NewGuildPlus host — do NOT import them
-const { t } = useI18n()
-const { hasRole } = useAuth()
-const config = useAppConfig()
+<script setup>
+import { ref, onMounted } from 'vue'
 
-// Fetch stats from our API route
-const { data, pending, error } = await useFetch('/api/apps/community-points/stats')
+const stats = ref(null)
+const pending = ref(true)
+const error = ref(null)
 
-// Award form state
-const awardTarget = ref('')
-const awardAmount = ref(10)
-const awarding = ref(false)
-const awardMessage = ref('')
-
-async function awardPoints() {
-  if (!awardTarget.value || !awardAmount.value) return
-  awarding.value = true
-  awardMessage.value = ''
+onMounted(async () => {
   try {
-    await $fetch('/api/apps/community-points/award', {
-      method: 'POST',
-      body: { targetUserId: awardTarget.value, amount: awardAmount.value },
-    })
-    awardMessage.value = t('awardSuccess', { amount: awardAmount.value, username: awardTarget.value })
-    awardTarget.value = ''
-    awardAmount.value = 10
-  } catch {
-    awardMessage.value = t('error.award')
+    const res = await fetch('/api/apps/my-app/stats')
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    stats.value = await res.json()
+  } catch (e) {
+    error.value = e
   } finally {
-    awarding.value = false
+    pending.value = false
   }
-}
+})
 </script>

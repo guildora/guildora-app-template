@@ -1,10 +1,10 @@
 {
-  "id": "your-app-id",
-  "name": "Your App Name",
+  "id": "my-app",
+  "name": "My App",
   "version": "1.0.0",
   "author": "your-github-username",
   "description": "A short description of what your app does.",
-  "repositoryUrl": "https://github.com/your-github-username/your-app-id",
+  "repositoryUrl": "https://github.com/your-github-username/my-app",
   "license": "MIT",
   "compatibility": {
     "core": {
@@ -14,28 +14,29 @@
   "navigation": {
     "rail": [
       {
-        "id": "your-app-id",
-        "icon": "star",
-        "label": "Your App",
-        "to": "/apps/your-app-id",
+        "id": "my-app",
+        "icon": "puzzle",
+        "label": "My App",
+        "to": "/apps/my-app",
         "order": 50,
         "requiredRoles": ["user"]
       }
     ],
     "panelGroups": [
       {
-        "id": "your-app-id-group",
-        "railItemId": "your-app-id",
+        "id": "my-app-group",
+        "railItemId": "my-app",
         "items": [
           {
-            "id": "your-app-id-overview",
+            "id": "my-app-overview",
             "label": "Overview",
-            "to": "/apps/your-app-id"
+            "to": "/apps/my-app",
+            "requiredRoles": ["user"]
           },
           {
-            "id": "your-app-id-admin",
+            "id": "my-app-admin",
             "label": "Manage",
-            "to": "/apps/your-app-id/admin",
+            "to": "/apps/my-app/admin",
             "requiredRoles": ["moderator"]
           }
         ]
@@ -46,35 +47,82 @@
     {
       "id": "read:member",
       "label": "Read members",
-      "description": "Read member profiles and roles"
+      "description": "Read member profiles and roles",
+      "required": false
     }
   ],
   "pages": [
     {
-      "id": "your-app-id-overview",
-      "path": "/apps/your-app-id",
-      "title": "Overview",
-      "requiredRoles": ["user"]
+      "id": "my-app-overview",
+      "path": "/apps/my-app",
+      "title": "My App",
+      "requiredRoles": ["user"],
+      "component": "src/pages/index.vue"
+    },
+    {
+      "id": "my-app-admin",
+      "path": "/apps/my-app/admin",
+      "title": "Manage",
+      "requiredRoles": ["moderator"],
+      "component": "src/pages/admin.vue"
     }
   ],
   "apiRoutes": [
     {
       "method": "GET",
-      "path": "/api/apps/your-app-id/data",
-      "handler": "src/api/data.get.ts",
+      "path": "/api/apps/my-app/stats",
+      "handler": "src/api/stats.get.ts",
       "requiredRoles": ["user"]
+    },
+    {
+      "method": "POST",
+      "path": "/api/apps/my-app/award",
+      "handler": "src/api/award.post.ts",
+      "requiredRoles": ["moderator"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/apps/my-app/config",
+      "handler": "src/api/config.get.ts",
+      "requiredRoles": ["moderator"]
+    },
+    {
+      "method": "POST",
+      "path": "/api/apps/my-app/reset",
+      "handler": "src/api/reset.post.ts",
+      "requiredRoles": ["moderator"]
     }
   ],
-  "botHooks": ["onVoiceActivity", "onRoleChange"],
+  "botHooks": ["onVoiceActivity", "onRoleChange", "onMemberJoin", "onInteraction"],
   "configFields": [
     {
-      "key": "exampleSetting",
+      "key": "leaderboardVisible",
       "type": "boolean",
-      "label": "Example setting",
-      "description": "Enable or disable an example feature.",
+      "label": "Show leaderboard",
+      "description": "Make the leaderboard visible to all users.",
       "defaultValue": true
+    },
+    {
+      "key": "pointsPerMinute",
+      "type": "number",
+      "label": "Points per voice-minute",
+      "description": "How many points a member earns per minute spent in voice.",
+      "defaultValue": 1
+    },
+    {
+      "key": "topTier",
+      "type": "string",
+      "label": "Top-tier role name",
+      "description": "Discord role name awarded to the leaderboard top 3.",
+      "defaultValue": "gold"
+    },
+    {
+      "key": "welcomeChannelId",
+      "type": "string",
+      "label": "Welcome channel ID",
+      "description": "Discord channel ID for welcome messages on member join."
     }
   ],
   "requiredEnv": [],
-  "installNotes": "Describe any post-install steps here."
+  "installNotes": "Set pointsPerMinute and welcomeChannelId in the app config to get started."
 }

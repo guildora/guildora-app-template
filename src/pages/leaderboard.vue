@@ -7,7 +7,7 @@
         <p class="mt-1 text-sm text-[var(--color-text-muted)]">{{ t('leaderboardSubtitle') }}</p>
       </div>
       <NuxtLink
-        to="/apps/community-points"
+        to="/apps/my-app"
         class="text-sm text-[var(--color-accent)] hover:underline"
       >
         ← {{ t('back') }}
@@ -100,5 +100,5 @@ const { hasRole } = useAuth()
 const config = useAppConfig()
 
 // Fetch leaderboard data from our API route
-const { data, pending, error } = await useFetch('/api/apps/community-points/stats?leaderboard=full')
+const { data, pending, error } = await useFetch('/api/apps/my-app/stats?leaderboard=full')
 </script>
