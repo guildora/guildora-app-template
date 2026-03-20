@@ -13,6 +13,7 @@
         "to": "/apps/guildora-app-template", "order": 50, "requiredRoles": ["user"] }
     ],
     "panelGroups": [{
+      "id": "guildora-app-template-group",
       "railItemId": "guildora-app-template",
       "items": [
         { "id": "template-app",   "label": "App",        "to": "/apps/guildora-app-template",       "requiredRoles": ["moderator"] },
