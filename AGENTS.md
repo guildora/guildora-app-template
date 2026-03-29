@@ -14,6 +14,24 @@ Full reference for building Guildora apps with AI agents:
 4. Reference the Hub integration guide: https://github.com/guildora/docs/blob/main/for-developers/hub-integration.md
 5. Reference the Bot integration guide: https://github.com/guildora/docs/blob/main/for-developers/bot-integration.md
 
+## Critical Rules (read before writing any code)
+
+- **Forms: always use `.field*`** — `.field`, `.field__control`, `.field__input`, `.field__select`, `.field__textarea`. The `.field__control` wrapper uses `var(--color-field-bg)` which ensures correct input contrast on all surface levels.
+- **No hex colors** — CSS variables only (`var(--color-accent)`, `var(--color-error)`, etc.)
+- **No imports for composables** — `useI18n`, `useAuth`, `useFetch`, `$fetch` are globally injected by the Hub.
+- **`useFetch()` only accepts a plain string URL** — do NOT pass `computed()` or `ref()` as the URL. The Hub's polyfill is not the real Nuxt `useFetch` and does not support reactive URLs. For dynamic/filtered requests, use `$fetch()` directly.
+- **`useAppConfig()` is NOT available** — access config values through your own API endpoint instead.
+
+**Minimal form pattern:**
+```html
+<div class="field">
+  <label class="field__label" for="my-field">Label</label>
+  <div class="field__control">
+    <input id="my-field" v-model="value" type="text" class="field__input" />
+  </div>
+</div>
+```
+
 ## Key References
 
 | Topic | URL |
@@ -28,4 +46,4 @@ Full reference for building Guildora apps with AI agents:
 | Submission | https://github.com/guildora/docs/blob/main/for-developers/submission.md |
 | Agent development guide | https://github.com/guildora/docs/blob/main/for-developers/agent-development.md |
 
-Local MCP access (Claude Code): `guildora-docs` server → `read_file("/for-developers/AGENTS.md")`
+Deployed docs (accessible from any system): https://guildora.github.io/docs — Claude Code agents can fetch any page directly via WebFetch.
